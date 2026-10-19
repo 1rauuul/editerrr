@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# edtr
 
-## Getting Started
+PWA para elegir fotos del dispositivo, encuadrarlas y montarlas en lienzos de dos
+mitades verticales, listos para publicar en Instagram o TikTok. Todo ocurre en el
+navegador: ninguna foto sale del dispositivo.
 
-First, run the development server:
+Las decisiones del proyecto están en [docs/editer core.md](<docs/editer core.md>).
+
+## Desarrollo
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre http://localhost:3000. La cámara del teléfono sirve para probar imágenes
+reales; para probar desde el móvil en la red local hace falta HTTPS o un túnel,
+porque la PWA no se instala sobre `http://` en una IP.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Comprobaciones
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run check   # lógica pura de la cadena de lienzos y del recorte
+npm run lint
+npm run build
+```
 
-## Learn More
+## Estructura
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `lib/model.ts`: tipos y lógica pura (cadena, borrado, geometría del recorte).
+- `lib/store.ts`: estado temporal con Zustand.
+- `lib/photo.ts`: miniaturas y carga de imágenes.
+- `lib/render.ts`: composición en Canvas 2D y guardado en JPEG.
+- `components/`: pantallas y modal de recorte.
+- `app/manifest.ts`, `public/sw.js`: capa PWA.
