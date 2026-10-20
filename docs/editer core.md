@@ -43,9 +43,11 @@ El usuario elige un formato **una sola vez, antes de empezar**. Ese formato se a
 
 | Formato | Uso previsto | Tamaño de exportación |
 | --- | --- | --- |
-| 4:5 | Publicaciones de Instagram | 1080 × 1350 |
-| 1:1 | Publicaciones cuadradas | 1080 × 1080 |
-| 9:16 | Historias de Instagram y TikTok | 1080 × 1920 |
+| 4:5 | Publicaciones de Instagram | hasta 2160 × 2700 |
+| 1:1 | Publicaciones cuadradas | hasta 2160 × 2160 |
+| 9:16 | Historias de Instagram y TikTok | hasta 2160 × 3840 |
+
+Se exporta al doble de la resolución nativa de la plataforma (2160 de ancho), con muestreo de alta calidad, y nunca por encima del ancho del recorte original: si la foto es pequeña, el lienzo no se amplía.
 
 El marco de recorte tiene la **proporción del lienzo completo** (1:1, 4:5 o 9:16), no la de media página. El recorte elegido se divide después en dos mitades verticales que se reparten entre lienzos.
 
@@ -171,12 +173,12 @@ Las fotos se guardan como `File`/`Blob` y solo se decodifican al recortar o al e
 - Un botón **Guardar** por lienzo, que descarga esa imagen individualmente. Se guarda el lienzo compuesto ya montado (sus dos mitades y el fondo), no las fotos originales. No hay exportación por lotes ni ZIP en esta versión.
 - En móvil la imagen se entrega con la hoja nativa de compartir (guardar en Fotos/Files o enviar a Instagram). `download` no funciona en la PWA de iOS ni en varios navegadores in-app.
 - Composición a tamaño de salida mediante Canvas 2D; nunca una captura de la vista previa.
-- Salida **JPEG**, calidad ~90, sRGB, sin metadatos, a 1080 px de ancho (1350 / 1080 / 1920 de alto según el formato).
+- Salida **JPEG**, calidad ~90, sRGB, sin metadatos, con muestreo de alta calidad. Ancho de salida: 2160 px (2× el nativo de Instagram), o el ancho del recorte si es menor.
 - La mitad vacía se rellena de **blanco** (JPEG no admite transparencia).
 - Nombre de archivo: `edtr-<ddMM>-<aleatorio>.jpg`, con la fecha de guardado y 4 caracteres aleatorios; por ejemplo `edtr-1910-a7f2.jpg`.
 - La sesión se mantiene después de guardar, para permitir correcciones y nuevas exportaciones.
 
-Cada foto ocupa media página: a 1080 px de ancho, cada mitad se ve a 540 px en la red social. Ese es el techo real de nitidez, no el tamaño del archivo exportado.
+Cada foto ocupa media página. El lienzo se exporta a 2160 px de ancho (1080 por mitad) para que se vea nítido en el móvil y resista la recompresión; lo que muestra Instagram en el feed sigue siendo 1080 en total, es decir, 540 px por foto.
 
 Alternativas descartadas por ahora: ZIP (dependencia extra) y exportación por lotes. Se puede reconsiderar si aparece la necesidad.
 
@@ -218,6 +220,4 @@ También deben validarse la instalación de la PWA, el comportamiento offline y 
 ## 12. Pendientes
 
 - Los archivos guardados el mismo día se ordenan por el sufijo aleatorio, no por el orden del carrusel; el orden real se conserva por la hora de descarga.
-- Verificar el peso real de los JPEG en un dispositivo; si se usan anuncios de TikTok, el tope es 500 KB por imagen y habría que ajustar la calidad.
-- Decidir si exportar a 2× aporta nitidez tras la recompresión de Instagram (a 1080 el resultado ya es el nativo de la app).
-- Medir en el teléfono el peso y la calidad de los JPEG guardados, y ajustar la calidad si hacen falta menos de 500 KB por imagen.
+- Verificar el peso real de los JPEG a 2160 px en un dispositivo; si pesa demasiado o no cumple el tope de 500 KB de los anuncios de TikTok, bajar a 1080 o la calidad.

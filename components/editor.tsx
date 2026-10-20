@@ -111,7 +111,7 @@ export default function Editor() {
             >
               {canvases.map((canvas, index) => (
                 <div key={canvas.id} data-slide={index} className="w-full shrink-0 snap-center px-4">
-                  <CanvasCard canvas={canvas} index={index} />
+                  <CanvasCard canvas={canvas} index={index} active={index === current} />
                 </div>
               ))}
             </div>

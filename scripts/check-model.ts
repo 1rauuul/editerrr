@@ -3,6 +3,7 @@ import {
   appendPhoto,
   clampCrop,
   cropHalf,
+  exportWidth,
   halfForCanvas,
   initialCrop,
   removeHalf,
@@ -88,5 +89,25 @@ assert.deepEqual(clampCrop({ x: 950, y: 950, w: 100, h: 100 }, 1000, 1000), {
   w: 100,
   h: 100,
 });
+
+// Ancho de exportación: 2× como máximo, sin inventar detalle.
+const sel = (id: string, w: number) => ({ id, photoId: "p" + id, crop: { x: 0, y: 0, w, h: w * 1.25 } });
+const photos: Record<string, { id: string; url: string; thumbUrl: string; width: number; height: number }> = {
+  pa: { id: "pa", url: "", thumbUrl: "", width: 4000, height: 5000 },
+  pb: { id: "pb", url: "", thumbUrl: "", width: 1000, height: 1250 },
+};
+const selections = { a: sel("a", 4000), b: sel("b", 1000), big: sel("big", 6000) };
+assert.equal(
+  exportWidth({ id: "c", left: { id: "l", selectionId: "a" }, right: { id: "r", selectionId: "b" } }, selections, photos),
+  1000,
+);
+assert.equal(
+  exportWidth({ id: "c", left: { id: "l", selectionId: "big" }, right: null }, selections, photos),
+  2160,
+);
+assert.equal(
+  exportWidth({ id: "c", left: { id: "l", selectionId: "b" }, right: null }, selections, photos),
+  1000,
+);
 
 console.log("modelo ok");

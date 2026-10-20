@@ -5,7 +5,15 @@ import type { Canvas } from "@/lib/model";
 import { paintCanvas, saveCanvas } from "@/lib/render";
 import { useEditor } from "@/lib/store";
 
-export function CanvasCard({ canvas, index }: { canvas: Canvas; index: number }) {
+export function CanvasCard({
+  canvas,
+  index,
+  active,
+}: {
+  canvas: Canvas;
+  index: number;
+  active: boolean;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
   const format = useEditor((s) => s.format);
   const selections = useEditor((s) => s.selections);
@@ -15,15 +23,16 @@ export function CanvasCard({ canvas, index }: { canvas: Canvas; index: number })
 
   useEffect(() => {
     if (!ref.current || !format) return;
+    // La vista previa visible se dibuja desde el original; el resto, de la miniatura.
     void paintCanvas(ref.current, canvas, {
       format,
       first: index === 0,
       selections,
       photos,
-      width: 360,
-      source: "thumb",
+      width: active ? 1080 : 360,
+      source: active ? "full" : "thumb",
     });
-  }, [canvas, format, index, selections, photos]);
+  }, [active, canvas, format, index, selections, photos]);
 
   function deleteLeft() {
     if (

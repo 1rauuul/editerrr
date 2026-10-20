@@ -73,3 +73,22 @@ export function halfForCanvas(isFirstCanvas: boolean, isLeftHalf: boolean): "lef
 export function cropHalf(crop: Crop, half: "left" | "right"): Crop {
   return { x: crop.x + (half === "right" ? crop.w / 2 : 0), y: crop.y, w: crop.w / 2, h: crop.h };
 }
+
+// Ancho de salida: hasta 2160 (2× el nativo) sin superar el ancho del recorte
+// original, para no inventar detalle al ampliar.
+export function exportWidth(
+  canvas: Canvas,
+  selections: Record<string, Selection>,
+  photos: Record<string, Photo>,
+  max = 2160,
+): number {
+  const widths: number[] = [];
+  for (const inst of [canvas.left, canvas.right]) {
+    if (!inst) continue;
+    const selection = selections[inst.selectionId];
+    const photo = selection && photos[selection.photoId];
+    if (selection && photo) widths.push(selection.crop.w);
+  }
+  if (!widths.length) return max;
+  return Math.max(1, Math.floor(Math.min(max, Math.min(...widths))));
+}
