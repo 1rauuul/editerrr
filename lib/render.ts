@@ -100,13 +100,12 @@ export async function saveCanvas(
   await deliver(blob, fileName());
 }
 
-// En móvil se comparte desde la hoja nativa (guardar en Fotos/Files, Instagram…);
-// el atributo download no funciona en la PWA de iOS ni en varios navegadores in-app.
+// En iOS el atributo download no funciona en la PWA ni en el navegador, así que
+// se usa la hoja nativa. En Android y escritorio se descarga directamente.
 async function deliver(blob: Blob, name: string) {
   const file = new File([blob], name, { type: "image/jpeg" });
-  const touch = window.matchMedia?.("(pointer: coarse)").matches ?? false;
 
-  if (touch && navigator.canShare?.({ files: [file] })) {
+  if (isIOS() && navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file] });
       return;
@@ -124,4 +123,11 @@ async function deliver(blob: Blob, name: string) {
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+function isIOS() {
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
 }

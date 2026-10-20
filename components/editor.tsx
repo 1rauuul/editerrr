@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CanvasCard } from "@/components/canvas-card";
 import { CropModal } from "@/components/crop-modal";
+import { Dialog } from "@/components/dialog";
 import { FORMATS, MAX_CANVASES, ratioOf, type Format, type Photo } from "@/lib/model";
 import { makePhoto } from "@/lib/photo";
 import { useEditor } from "@/lib/store";
@@ -16,6 +17,8 @@ export default function Editor() {
   const [queue, setQueue] = useState<Photo[]>([]);
   const [busy, setBusy] = useState(false);
   const [slide, setSlide] = useState(0);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const previousCount = useRef(0);
 
@@ -63,7 +66,10 @@ export default function Editor() {
 
     const take = files.slice(0, capacity);
     if (take.length < files.length) {
-      alert(`Solo caben ${capacity} foto(s) más: el máximo es ${MAX_CANVASES} lienzos.`);
+      setNotice({
+        title: "Límite de lienzos",
+        message: `Solo caben ${capacity} foto(s) más: el máximo es ${MAX_CANVASES} lienzos.`,
+      });
     }
     if (!take.length) return;
 
@@ -73,14 +79,18 @@ export default function Editor() {
       for (const file of take) made.push(await makePhoto(file));
       setQueue((q) => [...q, ...made]);
     } catch {
-      alert("No se pudo leer alguna de las imágenes.");
+      setNotice({
+        title: "No se pudo leer la imagen",
+        message: "Alguna de las fotos seleccionadas no se pudo cargar.",
+      });
     } finally {
       setBusy(false);
     }
   }
 
   function newProject() {
-    if (canvases.length && !confirm("Se descartará el proyecto actual y las fotos cargadas. ¿Continuar?")) {
+    if (canvases.length) {
+      setConfirmReset(true);
       return;
     }
     setQueue([]);
@@ -182,6 +192,35 @@ export default function Editor() {
             addPhoto(queue[0], crop);
             setQueue((q) => q.slice(1));
           }}
+        />
+      )}
+
+      {confirmReset && (
+        <Dialog
+          title="Nuevo proyecto"
+          message="Se descartará el proyecto actual y las fotos cargadas. Esta acción no se puede deshacer."
+          onDismiss={() => setConfirmReset(false)}
+          actions={[
+            { label: "Cancelar", onClick: () => setConfirmReset(false) },
+            {
+              label: "Descartar",
+              danger: true,
+              onClick: () => {
+                setConfirmReset(false);
+                setQueue([]);
+                reset();
+              },
+            },
+          ]}
+        />
+      )}
+
+      {notice && (
+        <Dialog
+          title={notice.title}
+          message={notice.message}
+          onDismiss={() => setNotice(null)}
+          actions={[{ label: "Entendido", primary: true, onClick: () => setNotice(null) }]}
         />
       )}
     </div>

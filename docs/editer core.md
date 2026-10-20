@@ -171,7 +171,7 @@ Las fotos se guardan como `File`/`Blob` y solo se decodifican al recortar o al e
 ## 8. Exportación
 
 - Un botón **Guardar** por lienzo, que descarga esa imagen individualmente. Se guarda el lienzo compuesto ya montado (sus dos mitades y el fondo), no las fotos originales. No hay exportación por lotes ni ZIP en esta versión.
-- En móvil la imagen se entrega con la hoja nativa de compartir (guardar en Fotos/Files o enviar a Instagram). `download` no funciona en la PWA de iOS ni en varios navegadores in-app.
+- En **Android y escritorio** la imagen se descarga directamente. En **iOS** se abre la hoja nativa de compartir, porque `download` no funciona ni en Safari ni en la PWA.
 - Composición a tamaño de salida mediante Canvas 2D; nunca una captura de la vista previa.
 - Salida **JPEG**, calidad ~90, sRGB, sin metadatos, con muestreo de alta calidad. Ancho de salida: 2160 px (2× el nativo de Instagram), o el ancho del recorte si es menor.
 - La mitad vacía se rellena de **blanco** (JPEG no admite transparencia).
