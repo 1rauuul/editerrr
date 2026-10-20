@@ -169,6 +169,7 @@ Las fotos se guardan como `File`/`Blob` y solo se decodifican al recortar o al e
 ## 8. Exportación
 
 - Un botón **Guardar** por lienzo, que descarga esa imagen individualmente. Se guarda el lienzo compuesto ya montado (sus dos mitades y el fondo), no las fotos originales. No hay exportación por lotes ni ZIP en esta versión.
+- En móvil la imagen se entrega con la hoja nativa de compartir (guardar en Fotos/Files o enviar a Instagram). `download` no funciona en la PWA de iOS ni en varios navegadores in-app.
 - Composición a tamaño de salida mediante Canvas 2D; nunca una captura de la vista previa.
 - Salida **JPEG**, calidad ~90, sRGB, sin metadatos, a 1080 px de ancho (1350 / 1080 / 1920 de alto según el formato).
 - La mitad vacía se rellena de **blanco** (JPEG no admite transparencia).
@@ -182,6 +183,8 @@ Alternativas descartadas por ahora: ZIP (dependencia extra) y exportación por l
 ## 9. Experiencia de uso
 
 - El formato se elige antes de recortar y queda bloqueado.
+- Los lienzos se muestran en horizontal, uno por pantalla, como los slides de una publicación: se desliza lateralmente y hay contador y flechas.
+- Al agregar una foto, la vista salta al lienzo nuevo.
 - El marco de recorte muestra la división en mitades, para que el usuario vea dónde se cortará la foto.
 - El encuadre se ajusta moviendo y ampliando la foto detrás del marco fijo.
 - El encuadre no puede dejar espacios sin cubrir: nunca se puede alejar por debajo del marco.

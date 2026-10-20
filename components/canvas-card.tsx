@@ -48,7 +48,7 @@ export function CanvasCard({ canvas, index }: { canvas: Canvas; index: number })
   }
 
   return (
-    <li>
+    <div>
       <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/10">
         <canvas ref={ref} className="block w-full" />
         {!canvas.right && (
@@ -86,6 +86,6 @@ export function CanvasCard({ canvas, index }: { canvas: Canvas; index: number })
           {saving ? "Guardando…" : "Guardar"}
         </button>
       </div>
-    </li>
+    </div>
   );
 }

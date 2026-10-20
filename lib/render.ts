@@ -74,13 +74,31 @@ export async function saveCanvas(
   });
   const blob = await new Promise<Blob | null>((resolve) => out.toBlob(resolve, "image/jpeg", 0.9));
   if (!blob) throw new Error("No se pudo generar el JPEG");
+  await deliver(blob, fileName());
+}
+
+// En móvil se comparte desde la hoja nativa (guardar en Fotos/Files, Instagram…);
+// el atributo download no funciona en la PWA de iOS ni en varios navegadores in-app.
+async function deliver(blob: Blob, name: string) {
+  const file = new File([blob], name, { type: "image/jpeg" });
+  const touch = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+
+  if (touch && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] });
+      return;
+    } catch (error) {
+      if ((error as DOMException).name === "AbortError") return;
+    }
+  }
 
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = fileName();
+  link.download = name;
+  link.rel = "noopener";
   document.body.appendChild(link);
   link.click();
   link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

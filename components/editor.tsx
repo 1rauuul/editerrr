@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CanvasCard } from "@/components/canvas-card";
 import { CropModal } from "@/components/crop-modal";
 import { FORMATS, MAX_CANVASES, ratioOf, type Format, type Photo } from "@/lib/model";
@@ -15,6 +15,9 @@ export default function Editor() {
   const reset = useEditor((s) => s.reset);
   const [queue, setQueue] = useState<Photo[]>([]);
   const [busy, setBusy] = useState(false);
+  const [slide, setSlide] = useState(0);
+  const scroller = useRef<HTMLDivElement>(null);
+  const previousCount = useRef(0);
 
   useEffect(() => {
     if (!canvases.length) return;
@@ -23,10 +26,35 @@ export default function Editor() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [canvases.length]);
 
+  // Al agregar una foto, la vista salta al lienzo nuevo.
+  useEffect(() => {
+    const el = scroller.current;
+    if (el && canvases.length > previousCount.current && canvases.length > 0) {
+      el.scrollTo({ left: el.clientWidth * (canvases.length - 1), behavior: "smooth" });
+    }
+    previousCount.current = canvases.length;
+  }, [canvases.length]);
+
   if (!format) return <FormatPicker onPick={chooseFormat} />;
 
   const capacity = MAX_CANVASES - canvases.length;
   const ratio = ratioOf(format);
+  const current = Math.min(slide, canvases.length - 1);
+
+  function onScroll() {
+    const el = scroller.current;
+    if (!el) return;
+    setSlide(Math.round(el.scrollLeft / el.clientWidth));
+  }
+
+  function goTo(index: number) {
+    const el = scroller.current;
+    if (!el) return;
+    el.scrollTo({
+      left: el.clientWidth * Math.max(0, Math.min(canvases.length - 1, index)),
+      behavior: "smooth",
+    });
+  }
 
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -73,15 +101,46 @@ export default function Editor() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-md flex-1 px-4 pb-32 pt-5">
+      <main className="flex-1 pb-32 pt-5">
         {canvases.length ? (
-          <ul className="space-y-7">
-            {canvases.map((canvas, index) => (
-              <CanvasCard key={canvas.id} canvas={canvas} index={index} />
-            ))}
-          </ul>
+          <>
+            <div
+              ref={scroller}
+              onScroll={onScroll}
+              className="mx-auto flex w-full max-w-md snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {canvases.map((canvas, index) => (
+                <div key={canvas.id} data-slide={index} className="w-full shrink-0 snap-center px-4">
+                  <CanvasCard canvas={canvas} index={index} />
+                </div>
+              ))}
+            </div>
+            <div className="mx-auto mt-4 flex w-full max-w-md items-center justify-center gap-6">
+              <button
+                type="button"
+                onClick={() => goTo(current - 1)}
+                disabled={current <= 0}
+                aria-label="Lienzo anterior"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg text-zinc-700 shadow-sm ring-1 ring-black/10 disabled:opacity-30"
+              >
+                ‹
+              </button>
+              <span className="text-xs tabular-nums text-zinc-500">
+                {current + 1} / {canvases.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => goTo(current + 1)}
+                disabled={current >= canvases.length - 1}
+                aria-label="Lienzo siguiente"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg text-zinc-700 shadow-sm ring-1 ring-black/10 disabled:opacity-30"
+              >
+                ›
+              </button>
+            </div>
+          </>
         ) : (
-          <p className="mt-24 text-center text-sm text-zinc-600">
+          <p className="mx-auto mt-24 max-w-md px-4 text-center text-sm text-zinc-600">
             Agrega la primera foto para crear el lienzo 1.
           </p>
         )}
