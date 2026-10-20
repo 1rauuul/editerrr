@@ -26,14 +26,14 @@ export function CanvasCard({
 
   useEffect(() => {
     if (!ref.current || !format) return;
-    // La vista previa visible se dibuja desde el original; el resto, de la miniatura.
+    // La vista previa sale de la miniatura: el original solo se decodifica al guardar.
     void paintCanvas(ref.current, canvas, {
       format,
       first: index === 0,
       selections,
       photos,
       width: active ? 1080 : 360,
-      source: active ? "full" : "thumb",
+      source: "thumb",
     });
   }, [active, canvas, format, index, selections, photos]);
 

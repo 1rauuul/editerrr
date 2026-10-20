@@ -166,7 +166,7 @@ type Project = {
 
 La mitad izquierda es obligatoria en el modelo; la derecha es opcional. Las fotos y selecciones se almacenan aparte, dentro del estado temporal de la sesión.
 
-Las fotos se guardan como `File`/`Blob` y solo se decodifican al recortar o al exportar. Decodificar 35 originales a la vez no cabe en la memoria de un teléfono de gama media.
+Las fotos se guardan como `File`/`Blob` con una miniatura de 1080 px para las vistas previas. El original solo se decodifica al guardar un lienzo, y si falla se usa la miniatura: nunca se genera un lienzo en blanco.
 
 ## 8. Exportación
 

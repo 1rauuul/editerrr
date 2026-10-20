@@ -20,7 +20,21 @@ export type PaintOptions = {
   source: "thumb" | "full";
 };
 
-export async function paintCanvas(target: HTMLCanvasElement, canvas: Canvas, opts: PaintOptions) {
+type Layer = { img: HTMLImageElement; src: ReturnType<typeof cropHalf>; left: boolean; release: string | null };
+
+async function tryLoad(url: string) {
+  try {
+    return await loadImage(url);
+  } catch {
+    return null;
+  }
+}
+
+export async function paintCanvas(
+  target: HTMLCanvasElement,
+  canvas: Canvas,
+  opts: PaintOptions,
+): Promise<boolean> {
   const { w, h } = FORMATS[opts.format];
   const width = opts.width;
   const height = Math.round((width * h) / w);
@@ -28,41 +42,47 @@ export async function paintCanvas(target: HTMLCanvasElement, canvas: Canvas, opt
   const halves: Array<{ inst: HalfInstance; left: boolean }> = [{ inst: canvas.left, left: true }];
   if (canvas.right) halves.push({ inst: canvas.right, left: false });
 
-  // Las imágenes se cargan antes de tocar el canvas: así no parpadea en blanco
-  // mientras se decodifica el original.
-  const layers = await Promise.all(
-    halves.map(async ({ inst, left }) => {
-      const selection = opts.selections[inst.selectionId];
-      const photo = selection && opts.photos[selection.photoId];
-      if (!selection || !photo) return null;
+  const layers: Layer[] = [];
 
-      const url = opts.source === "thumb" ? photo.thumbUrl : photo.url;
-      try {
-        const img = await loadImage(url);
-        const k = img.naturalWidth / photo.width;
-        const c = selection.crop;
-        const src = cropHalf(
-          { x: c.x * k, y: c.y * k, w: c.w * k, h: c.h * k },
-          halfForCanvas(opts.first, left),
-        );
-        return { img, src, left, url: opts.source === "full" ? url : null };
-      } catch {
-        return null;
-      }
-    }),
-  );
+  for (const { inst, left } of halves) {
+    const selection = opts.selections[inst.selectionId];
+    const photo = selection && opts.photos[selection.photoId];
+    if (!selection || !photo) continue;
+
+    const primary = opts.source === "thumb" ? photo.thumbUrl : photo.url;
+    let img = await tryLoad(primary);
+    let used = primary;
+
+    // Si el original no se puede decodificar (móviles con poca memoria) se usa la
+    // miniatura: mejor una imagen algo blanda que un lienzo en blanco.
+    if (!img && primary !== photo.thumbUrl) {
+      img = await tryLoad(photo.thumbUrl);
+      used = photo.thumbUrl;
+    }
+    if (!img) continue;
+
+    const k = img.naturalWidth / photo.width;
+    const c = selection.crop;
+    layers.push({
+      img,
+      src: cropHalf({ x: c.x * k, y: c.y * k, w: c.w * k, h: c.h * k }, halfForCanvas(opts.first, left)),
+      left,
+      release: opts.source === "full" && used === photo.url ? used : null,
+    });
+  }
+
+  if (!layers.length) return false;
 
   target.width = width;
   target.height = height;
   const ctx = target.getContext("2d");
-  if (!ctx) return;
+  if (!ctx) return false;
 
   ctx.imageSmoothingQuality = "high";
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, width, height);
 
   for (const layer of layers) {
-    if (!layer) continue;
     ctx.drawImage(
       layer.img,
       layer.src.x,
@@ -74,8 +94,10 @@ export async function paintCanvas(target: HTMLCanvasElement, canvas: Canvas, opt
       width / 2,
       height,
     );
-    if (layer.url) forgetImage(layer.url);
+    if (layer.release) forgetImage(layer.release);
   }
+
+  return true;
 }
 
 export function fileName(date = new Date()) {
@@ -90,11 +112,12 @@ export async function saveCanvas(
   opts: Omit<PaintOptions, "width" | "source">,
 ) {
   const out = document.createElement("canvas");
-  await paintCanvas(out, canvas, {
+  const painted = await paintCanvas(out, canvas, {
     ...opts,
     width: exportWidth(canvas, opts.selections, opts.photos),
     source: "full",
   });
+  if (!painted) throw new Error("No se pudieron cargar las fotos del lienzo");
   const blob = await new Promise<Blob | null>((resolve) => out.toBlob(resolve, "image/jpeg", 0.9));
   if (!blob) throw new Error("No se pudo generar el JPEG");
   await deliver(blob, fileName());
