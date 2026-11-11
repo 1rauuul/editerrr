@@ -4,6 +4,8 @@
 
 Construir una PWA que permita seleccionar fotos del dispositivo, elegir un encuadre de cada una y combinarlas en lienzos divididos en dos mitades verticales. Los lienzos se generan durante un único flujo de edición y después se guardan como imágenes para publicarlas en redes sociales.
 
+La app tiene además un flujo aparte, **Stretch**, que estira una imagen a 9:16.
+
 No se trata de generación con IA ni de un editor libre de capas.
 
 ## 2. Plataforma y stack acordado
@@ -184,6 +186,7 @@ Alternativas descartadas por ahora: ZIP (dependencia extra) y exportación por l
 
 ## 9. Experiencia de uso
 
+- Pantalla inicial con dos modos: **Slides** (carrusel) y **Stretch** (una imagen a 9:16).
 - El formato se elige antes de recortar y queda bloqueado.
 - Los lienzos se muestran en horizontal, uno por pantalla, como los slides de una publicación: se desliza lateralmente y hay contador y flechas.
 - Al agregar una foto, la vista salta al lienzo nuevo.
@@ -221,3 +224,12 @@ También deben validarse la instalación de la PWA, el comportamiento offline y 
 
 - Los archivos guardados el mismo día se ordenan por el sufijo aleatorio, no por el orden del carrusel; el orden real se conserva por la hora de descarga.
 - Verificar el peso real de los JPEG a 2160 px en un dispositivo; si pesa demasiado o no cumple el tope de 500 KB de los anuncios de TikTok, bajar a 1080 o la calidad.
+
+## 13. Stretch
+
+Flujo aparte del carrusel, elegido en la pantalla inicial junto a **Slides**.
+
+- Toma **una sola imagen**, recorta la mayor sección **4:5 centrada** y la estira para llenar un lienzo **9:16**. No usa el modal de encuadre ni el slider de zoom, y no divide en mitades.
+- La vista previa muestra la deformación antes de guardar.
+- Salida **JPEG 9:16**, con el mismo criterio de ancho que los lienzos (hasta 2160 px, sin superar el ancho original) y la misma entrega: descarga directa en Android y escritorio, hoja de compartir en iOS.
+- Al salir del flujo se descarta la imagen; no se guarda en el proyecto de Slides.

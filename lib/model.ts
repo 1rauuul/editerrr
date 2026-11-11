@@ -92,3 +92,9 @@ export function exportWidth(
   if (!widths.length) return max;
   return Math.max(1, Math.floor(Math.min(max, Math.min(...widths))));
 }
+
+// Salida de Stretch: ancho nativo hasta 2160 y alto fijo 9:16.
+export function stretchSize(imgW: number, max = 2160) {
+  const width = Math.max(1, Math.floor(Math.min(max, imgW)));
+  return { width, height: Math.round((width * FORMATS["9:16"].h) / FORMATS["9:16"].w) };
+}

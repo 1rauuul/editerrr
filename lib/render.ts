@@ -3,6 +3,9 @@ import {
   cropHalf,
   exportWidth,
   halfForCanvas,
+  initialCrop,
+  ratioOf,
+  stretchSize,
   type Canvas,
   type Format,
   type HalfInstance,
@@ -118,6 +121,35 @@ export async function saveCanvas(
     source: "full",
   });
   if (!painted) throw new Error("No se pudieron cargar las fotos del lienzo");
+  const blob = await new Promise<Blob | null>((resolve) => out.toBlob(resolve, "image/jpeg", 0.9));
+  if (!blob) throw new Error("No se pudo generar el JPEG");
+  await deliver(blob, fileName());
+}
+
+// Estira la imagen completa al 9:16, sin recorte ni mitades.
+export async function saveStretch(photo: Photo) {
+  let img = await tryLoad(photo.url);
+  let used = photo.url;
+  if (!img && photo.thumbUrl !== photo.url) {
+    img = await tryLoad(photo.thumbUrl);
+    used = photo.thumbUrl;
+  }
+  if (!img) throw new Error("No se pudo cargar la imagen");
+
+  const crop = initialCrop(img.naturalWidth, img.naturalHeight, ratioOf("4:5"));
+  const { width, height } = stretchSize(crop.w);
+  const out = document.createElement("canvas");
+  out.width = width;
+  out.height = height;
+  const ctx = out.getContext("2d");
+  if (!ctx) throw new Error("No se pudo preparar el lienzo");
+
+  ctx.imageSmoothingQuality = "high";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(img, crop.x, crop.y, crop.w, crop.h, 0, 0, width, height);
+  forgetImage(used);
+
   const blob = await new Promise<Blob | null>((resolve) => out.toBlob(resolve, "image/jpeg", 0.9));
   if (!blob) throw new Error("No se pudo generar el JPEG");
   await deliver(blob, fileName());

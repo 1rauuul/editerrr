@@ -7,6 +7,7 @@ import {
   halfForCanvas,
   initialCrop,
   removeHalf,
+  stretchSize,
   type Canvas,
 } from "../lib/model.ts";
 
@@ -109,5 +110,15 @@ assert.equal(
   exportWidth({ id: "c", left: { id: "l", selectionId: "b" }, right: null }, selections, photos),
   1000,
 );
+
+// Stretch: parte de la mayor sección 4:5 centrada, también si la foto ya es 9:16.
+const stretchCrop = initialCrop(1080, 1920, 0.8);
+assert.deepEqual(stretchCrop, { x: 0, y: 285, w: 1080, h: 1350 });
+assert.deepEqual(stretchSize(stretchCrop.w), { width: 1080, height: 1920 });
+
+// Stretch: ancho hasta 2160 y alto fijo 9:16.
+assert.deepEqual(stretchSize(1080), { width: 1080, height: 1920 });
+assert.deepEqual(stretchSize(4000), { width: 2160, height: 3840 });
+assert.deepEqual(stretchSize(500), { width: 500, height: 889 });
 
 console.log("modelo ok");

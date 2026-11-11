@@ -4,9 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { CanvasCard } from "@/components/canvas-card";
 import { CropModal } from "@/components/crop-modal";
 import { Dialog } from "@/components/dialog";
+import { ModePicker } from "@/components/mode-picker";
+import { Stretch } from "@/components/stretch";
 import { FORMATS, MAX_CANVASES, ratioOf, type Format, type Photo } from "@/lib/model";
 import { makePhoto } from "@/lib/photo";
 import { useEditor } from "@/lib/store";
+
+type Mode = "home" | "slides" | "stretch";
 
 export default function Editor() {
   const format = useEditor((s) => s.format);
@@ -14,6 +18,7 @@ export default function Editor() {
   const canvases = useEditor((s) => s.canvases);
   const addPhoto = useEditor((s) => s.addPhoto);
   const reset = useEditor((s) => s.reset);
+  const [mode, setMode] = useState<Mode>("home");
   const [queue, setQueue] = useState<Photo[]>([]);
   const [busy, setBusy] = useState(false);
   const [slide, setSlide] = useState(0);
@@ -38,7 +43,9 @@ export default function Editor() {
     previousCount.current = canvases.length;
   }, [canvases.length]);
 
-  if (!format) return <FormatPicker onPick={chooseFormat} />;
+  if (mode === "home") return <ModePicker onPick={setMode} />;
+  if (mode === "stretch") return <Stretch onHome={() => setMode("home")} />;
+  if (!format) return <FormatPicker onPick={chooseFormat} onBack={() => setMode("home")} />;
 
   const capacity = MAX_CANVASES - canvases.length;
   const ratio = ratioOf(format);
@@ -101,7 +108,14 @@ export default function Editor() {
     <div className="flex min-h-dvh flex-col bg-zinc-100 text-zinc-900">
       <header className="sticky top-0 z-20 border-b border-black/5 bg-zinc-100/90 backdrop-blur">
         <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-3">
-          <span className="text-lg font-semibold tracking-tight">edtr</span>
+          <button
+            type="button"
+            onClick={() => setMode("home")}
+            aria-label="Volver al inicio"
+            className="flex items-center gap-1 text-lg font-semibold tracking-tight"
+          >
+            <span className="text-xl font-normal text-zinc-500">‹</span> edtr
+          </button>
           <span className="rounded-full bg-zinc-900 px-2.5 py-0.5 text-xs font-medium text-white">
             {format}
           </span>
@@ -227,10 +241,23 @@ export default function Editor() {
   );
 }
 
-function FormatPicker({ onPick }: { onPick: (format: Format) => void }) {
+function FormatPicker({
+  onPick,
+  onBack,
+}: {
+  onPick: (format: Format) => void;
+  onBack: () => void;
+}) {
   return (
     <div className="flex min-h-dvh flex-col justify-center bg-zinc-100 px-5 py-10 text-zinc-900">
       <div className="mx-auto w-full max-w-md">
+        <button
+          type="button"
+          onClick={onBack}
+          className="mb-6 flex items-center gap-1 text-sm text-zinc-600"
+        >
+          <span className="text-lg">‹</span> Inicio
+        </button>
         <h1 className="text-2xl font-semibold tracking-tight">Elige el formato</h1>
         <p className="mt-2 text-sm text-zinc-600">
           Se aplica a todos los lienzos y no se puede cambiar después.
