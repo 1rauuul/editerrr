@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CropModal } from "@/components/crop-modal";
 import { Dialog } from "@/components/dialog";
-import { initialCrop, ratioOf, stretchSize, type Photo } from "@/lib/model";
+import { initialCrop, ratioOf, stretchSize, type Crop, type Photo } from "@/lib/model";
 import { makePhoto } from "@/lib/photo";
 import { saveStretch } from "@/lib/render";
 
 export function Stretch({ onHome }: { onHome: () => void }) {
   const [photo, setPhoto] = useState<Photo | null>(null);
+  const [crop, setCrop] = useState<Crop | null>(null);
+  const [cropping, setCropping] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
@@ -24,7 +27,10 @@ export function Stretch({ onHome }: { onHome: () => void }) {
 
     setBusy(true);
     try {
-      setPhoto(await makePhoto(file));
+      const next = await makePhoto(file);
+      setPhoto(next);
+      setCrop(initialCrop(next.width, next.height, ratioOf("4:5")));
+      setCropping(true);
     } catch {
       setNotice({
         title: "No se pudo leer la imagen",
@@ -36,10 +42,10 @@ export function Stretch({ onHome }: { onHome: () => void }) {
   }
 
   async function save() {
-    if (!photo) return;
+    if (!photo || !crop) return;
     setSaving(true);
     try {
-      await saveStretch(photo);
+      await saveStretch(photo, crop);
     } catch {
       setNotice({
         title: "No se pudo guardar",
@@ -50,7 +56,6 @@ export function Stretch({ onHome }: { onHome: () => void }) {
     }
   }
 
-  const crop = photo ? initialCrop(photo.width, photo.height, ratioOf("4:5")) : null;
   const out = crop ? stretchSize(crop.w) : null;
   const locked = busy || saving;
 
@@ -96,13 +101,21 @@ export function Stretch({ onHome }: { onHome: () => void }) {
               />
             </div>
             <p className="mt-3 max-w-xs text-center text-xs leading-relaxed text-zinc-500">
-              Se toma la mayor sección 4:5 centrada y se estira al 9:16.
+              Se estira la sección 4:5 elegida al 9:16.
               {out ? ` Se guardará a ${out.width} × ${out.height} px.` : ""}
             </p>
+            <button
+              type="button"
+              onClick={() => setCropping(true)}
+              disabled={locked}
+              className="mt-3 rounded-full bg-white px-4 py-1.5 text-sm font-medium text-zinc-700 ring-1 ring-black/10 disabled:opacity-50"
+            >
+              Ajustar recorte 4:5
+            </button>
           </>
         ) : (
           <p className="max-w-xs text-center text-sm text-zinc-600">
-            Elige una imagen para tomar su sección 4:5 y convertirla a 9:16.
+            Elige una imagen y ajusta su sección 4:5 para convertirla a 9:16.
           </p>
         )}
       </main>
@@ -152,6 +165,23 @@ export function Stretch({ onHome }: { onHome: () => void }) {
           )}
         </div>
       </div>
+
+      {cropping && photo && crop && (
+        <CropModal
+          key={photo.id}
+          photo={photo}
+          ratio={ratioOf("4:5")}
+          startCrop={crop}
+          showSplit={false}
+          title="Ajusta el recorte 4:5"
+          previewRatio={ratioOf("9:16")}
+          onCancel={() => setCropping(false)}
+          onConfirm={(next) => {
+            setCrop(next);
+            setCropping(false);
+          }}
+        />
+      )}
 
       {notice && (
         <Dialog

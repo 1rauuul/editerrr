@@ -6,13 +6,28 @@ import { clampCrop, initialCrop, type Crop, type Photo } from "@/lib/model";
 type Props = {
   photo: Photo;
   ratio: number;
+  startCrop?: Crop;
+  showSplit?: boolean;
+  title?: string;
+  previewRatio?: number;
   onCancel: () => void;
   onConfirm: (crop: Crop) => void;
 };
 
-export function CropModal({ photo, ratio, onCancel, onConfirm }: Props) {
+export function CropModal({
+  photo,
+  ratio,
+  startCrop,
+  showSplit = true,
+  title = "Ajusta el encuadre",
+  previewRatio,
+  onCancel,
+  onConfirm,
+}: Props) {
   const base = useMemo(() => initialCrop(photo.width, photo.height, ratio), [photo, ratio]);
-  const [crop, setCrop] = useState<Crop>(base);
+  const [crop, setCrop] = useState<Crop>(() =>
+    startCrop ? clampCrop(startCrop, photo.width, photo.height) : base,
+  );
   const frame = useRef<HTMLDivElement>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const drag = useRef<{ x: number; y: number; crop: Crop } | null>(null);
@@ -83,13 +98,21 @@ export function CropModal({ photo, ratio, onCancel, onConfirm }: Props) {
     }
   }
 
+  const imageStyle = {
+    maxWidth: "none",
+    width: `${(photo.width / crop.w) * 100}%`,
+    height: `${(photo.height / crop.h) * 100}%`,
+    left: `${(-crop.x / crop.w) * 100}%`,
+    top: `${(-crop.y / crop.h) * 100}%`,
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-zinc-950 text-white">
       <div className="flex items-center justify-between px-4 py-3">
         <button type="button" onClick={onCancel} className="rounded-lg px-2 py-1 text-sm text-white/70">
           Cancelar
         </button>
-        <p className="text-sm font-medium">Ajusta el encuadre</p>
+        <p className="text-sm font-medium">{title}</p>
         <button
           type="button"
           onClick={() => onConfirm(crop)}
@@ -115,15 +138,26 @@ export function CropModal({ photo, ratio, onCancel, onConfirm }: Props) {
             alt=""
             draggable={false}
             className="pointer-events-none absolute select-none"
-            style={{
-              maxWidth: "none",
-              width: `${(photo.width / crop.w) * 100}%`,
-              height: `${(photo.height / crop.h) * 100}%`,
-              left: `${(-crop.x / crop.w) * 100}%`,
-              top: `${(-crop.y / crop.h) * 100}%`,
-            }}
+            style={imageStyle}
           />
-          <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-white/80 mix-blend-difference" />
+          {showSplit && (
+            <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-white/80 mix-blend-difference" />
+          )}
+          {previewRatio !== undefined && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-2 right-2 z-10 w-14 overflow-hidden rounded-md bg-white shadow-lg ring-1 ring-black/20"
+              style={{ aspectRatio: String(previewRatio) }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photo.thumbUrl}
+                alt=""
+                className="absolute max-w-none select-none"
+                style={imageStyle}
+              />
+            </div>
+          )}
         </div>
       </div>
 

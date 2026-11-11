@@ -3,10 +3,9 @@ import {
   cropHalf,
   exportWidth,
   halfForCanvas,
-  initialCrop,
-  ratioOf,
   stretchSize,
   type Canvas,
+  type Crop,
   type Format,
   type HalfInstance,
   type Photo,
@@ -126,8 +125,8 @@ export async function saveCanvas(
   await deliver(blob, fileName());
 }
 
-// Estira la imagen completa al 9:16, sin recorte ni mitades.
-export async function saveStretch(photo: Photo) {
+// Estira al 9:16 solo la sección 4:5 elegida, sin mitades.
+export async function saveStretch(photo: Photo, crop: Crop) {
   let img = await tryLoad(photo.url);
   let used = photo.url;
   if (!img && photo.thumbUrl !== photo.url) {
@@ -136,7 +135,9 @@ export async function saveStretch(photo: Photo) {
   }
   if (!img) throw new Error("No se pudo cargar la imagen");
 
-  const crop = initialCrop(img.naturalWidth, img.naturalHeight, ratioOf("4:5"));
+  // El recorte vive en coordenadas del original; se escala si se usa la miniatura.
+  const k = img.naturalWidth / photo.width;
+  const src = { x: crop.x * k, y: crop.y * k, w: crop.w * k, h: crop.h * k };
   const { width, height } = stretchSize(crop.w);
   const out = document.createElement("canvas");
   out.width = width;
@@ -147,7 +148,7 @@ export async function saveStretch(photo: Photo) {
   ctx.imageSmoothingQuality = "high";
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, width, height);
-  ctx.drawImage(img, crop.x, crop.y, crop.w, crop.h, 0, 0, width, height);
+  ctx.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, width, height);
   forgetImage(used);
 
   const blob = await new Promise<Blob | null>((resolve) => out.toBlob(resolve, "image/jpeg", 0.9));

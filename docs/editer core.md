@@ -229,7 +229,8 @@ También deben validarse la instalación de la PWA, el comportamiento offline y 
 
 Flujo aparte del carrusel, elegido en la pantalla inicial junto a **Slides**.
 
-- Toma **una sola imagen**, recorta la mayor sección **4:5 centrada** y la estira para llenar un lienzo **9:16**. No usa el modal de encuadre ni el slider de zoom, y no divide en mitades.
-- La vista previa muestra la deformación antes de guardar.
+- Toma **una sola imagen**. El usuario elige la sección **4:5** con el mismo editor de recorte del flujo Slides (arrastre, pellizco y slider de zoom), sin la línea de división en mitades. Si la foto no es 4:5, la sección puede moverse por toda la imagen.
+- La vista previa muestra la sección elegida ya estirada al **9:16**; dentro del editor hay una mini-preview 9:16 que se actualiza al mover o ampliar el recorte.
+- Al guardar se estira solo la sección elegida, no la foto completa.
 - Salida **JPEG 9:16**, con el mismo criterio de ancho que los lienzos (hasta 2160 px, sin superar el ancho original) y la misma entrega: descarga directa en Android y escritorio, hoja de compartir en iOS.
 - Al salir del flujo se descarta la imagen; no se guarda en el proyecto de Slides.

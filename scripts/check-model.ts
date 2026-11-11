@@ -116,6 +116,20 @@ const stretchCrop = initialCrop(1080, 1920, 0.8);
 assert.deepEqual(stretchCrop, { x: 0, y: 285, w: 1080, h: 1350 });
 assert.deepEqual(stretchSize(stretchCrop.w), { width: 1080, height: 1920 });
 
+// El recorte 4:5 puede moverse por toda la altura de una foto 9:16.
+assert.deepEqual(clampCrop({ x: 0, y: 0, w: 1080, h: 1350 }, 1080, 1920), {
+  x: 0,
+  y: 0,
+  w: 1080,
+  h: 1350,
+});
+assert.deepEqual(clampCrop({ x: 0, y: 570, w: 1080, h: 1350 }, 1080, 1920), {
+  x: 0,
+  y: 570,
+  w: 1080,
+  h: 1350,
+});
+
 // Stretch: ancho hasta 2160 y alto fijo 9:16.
 assert.deepEqual(stretchSize(1080), { width: 1080, height: 1920 });
 assert.deepEqual(stretchSize(4000), { width: 2160, height: 3840 });
