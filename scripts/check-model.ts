@@ -6,7 +6,10 @@ import {
   exportWidth,
   halfForCanvas,
   initialCrop,
+  layoutBandRatio,
+  layoutSize,
   removeHalf,
+  repeatFirstBand,
   stretchSize,
   type Canvas,
 } from "../lib/model.ts";
@@ -134,5 +137,34 @@ assert.deepEqual(clampCrop({ x: 0, y: 570, w: 1080, h: 1350 }, 1080, 1920), {
 assert.deepEqual(stretchSize(1080), { width: 1080, height: 1920 });
 assert.deepEqual(stretchSize(4000), { width: 2160, height: 3840 });
 assert.deepEqual(stretchSize(500), { width: 500, height: 889 });
+
+// Layout: cada franja es un tercio del alto del lienzo.
+assert.equal(layoutBandRatio("9:16"), 1080 / 640);
+assert.equal(layoutBandRatio("4:5"), 1080 / 450);
+
+// Salida del Layout: ancho hasta 2160 sin superar el recorte más estrecho.
+const band = (w: number) => ({ photo: photos.pa, crop: { x: 0, y: 0, w, h: w * 0.6 } });
+assert.deepEqual(layoutSize([band(4000), band(1080), band(2000)], "9:16"), {
+  width: 1080,
+  height: 1920,
+});
+assert.deepEqual(layoutSize([band(4000), null, band(2000)], "4:5"), {
+  width: 2000,
+  height: 2500,
+});
+assert.deepEqual(layoutSize([band(4000), null, null], "9:16"), {
+  width: 2160,
+  height: 3840,
+});
+assert.deepEqual(layoutSize([null, null, null], "4:5"), { width: 2160, height: 2700 });
+
+// Repetir copia la primera franja sin tocar las demás al editar después.
+const firstBand = band(4000);
+const repeated = repeatFirstBand([firstBand, null, null]);
+assert.equal(repeated[0], firstBand);
+assert.equal(repeated[1], firstBand);
+assert.equal(repeated[2], firstBand);
+const emptyLayout = [null, null, null];
+assert.equal(repeatFirstBand(emptyLayout), emptyLayout);
 
 console.log("modelo ok");

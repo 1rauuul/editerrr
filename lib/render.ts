@@ -3,11 +3,13 @@ import {
   cropHalf,
   exportWidth,
   halfForCanvas,
+  layoutSize,
   stretchSize,
   type Canvas,
   type Crop,
   type Format,
   type HalfInstance,
+  type LayoutCanvas,
   type Photo,
   type Selection,
 } from "./model";
@@ -151,6 +153,92 @@ export async function saveStretch(photo: Photo, crop: Crop) {
   ctx.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, width, height);
   forgetImage(used);
 
+  const blob = await new Promise<Blob | null>((resolve) => out.toBlob(resolve, "image/jpeg", 0.9));
+  if (!blob) throw new Error("No se pudo generar el JPEG");
+  await deliver(blob, fileName());
+}
+
+// Tres franjas horizontales a todo lo ancho, una por tercio del lienzo.
+export async function paintLayout(
+  target: HTMLCanvasElement,
+  canvas: LayoutCanvas,
+  opts: { width: number; source: "thumb" | "full" },
+): Promise<boolean> {
+  const { w, h } = FORMATS[canvas.format];
+  const width = opts.width;
+  const height = Math.round((width * h) / w);
+  const bands = canvas.bands.slice(0, 3);
+
+  const layers: Array<{
+    img: HTMLImageElement;
+    src: Crop;
+    top: number;
+    height: number;
+    release: string | null;
+  }> = [];
+
+  for (const [index, band] of bands.entries()) {
+    if (!band) continue;
+
+    const { photo, crop } = band;
+    const primary = opts.source === "thumb" ? photo.thumbUrl : photo.url;
+    let img = await tryLoad(primary);
+    let used = primary;
+
+    // Mismo criterio que el carrusel: si el original no se puede decodificar,
+    // se usa la miniatura antes que dejar la franja en blanco.
+    if (!img && primary !== photo.thumbUrl) {
+      img = await tryLoad(photo.thumbUrl);
+      used = photo.thumbUrl;
+    }
+    if (!img) continue;
+
+    const k = img.naturalWidth / photo.width;
+    const top = Math.round((index * height) / 3);
+    const bottom = Math.round(((index + 1) * height) / 3);
+    layers.push({
+      img,
+      src: { x: crop.x * k, y: crop.y * k, w: crop.w * k, h: crop.h * k },
+      top,
+      height: bottom - top,
+      release: opts.source === "full" && used === photo.url ? used : null,
+    });
+  }
+
+  if (!layers.length) return false;
+
+  target.width = width;
+  target.height = height;
+  const ctx = target.getContext("2d");
+  if (!ctx) return false;
+
+  ctx.imageSmoothingQuality = "high";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
+
+  for (const layer of layers) {
+    ctx.drawImage(
+      layer.img,
+      layer.src.x,
+      layer.src.y,
+      layer.src.w,
+      layer.src.h,
+      0,
+      layer.top,
+      width,
+      layer.height,
+    );
+    if (layer.release) forgetImage(layer.release);
+  }
+
+  return true;
+}
+
+export async function saveLayout(canvas: LayoutCanvas) {
+  const out = document.createElement("canvas");
+  const { width } = layoutSize(canvas.bands, canvas.format);
+  const painted = await paintLayout(out, canvas, { width, source: "full" });
+  if (!painted) throw new Error("No se pudieron cargar las fotos del lienzo");
   const blob = await new Promise<Blob | null>((resolve) => out.toBlob(resolve, "image/jpeg", 0.9));
   if (!blob) throw new Error("No se pudo generar el JPEG");
   await deliver(blob, fileName());

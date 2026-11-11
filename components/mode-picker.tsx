@@ -1,6 +1,6 @@
 "use client";
 
-type Mode = "slides" | "stretch";
+type Mode = "slides" | "stretch" | "layout";
 
 export function ModePicker({ onPick }: { onPick: (mode: Mode) => void }) {
   return (
@@ -38,6 +38,24 @@ export function ModePicker({ onPick }: { onPick: (mode: Mode) => void }) {
             <span>
               <span className="block text-base font-semibold">Stretch</span>
               <span className="block text-sm text-zinc-500">Estira una imagen 4:5 a 9:16</span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onPick("layout")}
+            className="flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+          >
+            <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-zinc-100">
+              <span className="flex h-10 w-8 flex-col gap-[2px] overflow-hidden rounded-sm">
+                <span className="flex-1 bg-zinc-400" />
+                <span className="flex-1 bg-zinc-300" />
+                <span className="flex-1 bg-zinc-400" />
+              </span>
+            </span>
+            <span>
+              <span className="block text-base font-semibold">Layout</span>
+              <span className="block text-sm text-zinc-500">Tres franjas de una o varias fotos</span>
             </span>
           </button>
         </div>

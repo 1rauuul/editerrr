@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { CanvasCard } from "@/components/canvas-card";
 import { CropModal } from "@/components/crop-modal";
 import { Dialog } from "@/components/dialog";
+import { Layout } from "@/components/layout";
 import { ModePicker } from "@/components/mode-picker";
 import { Stretch } from "@/components/stretch";
 import { FORMATS, MAX_CANVASES, ratioOf, type Format, type Photo } from "@/lib/model";
 import { makePhoto } from "@/lib/photo";
 import { useEditor } from "@/lib/store";
 
-type Mode = "home" | "slides" | "stretch";
+type Mode = "home" | "slides" | "stretch" | "layout";
 
 export default function Editor() {
   const format = useEditor((s) => s.format);
@@ -45,6 +46,7 @@ export default function Editor() {
 
   if (mode === "home") return <ModePicker onPick={setMode} />;
   if (mode === "stretch") return <Stretch onHome={() => setMode("home")} />;
+  if (mode === "layout") return <Layout onHome={() => setMode("home")} />;
   if (!format) return <FormatPicker onPick={chooseFormat} onBack={() => setMode("home")} />;
 
   const capacity = MAX_CANVASES - canvases.length;

@@ -98,3 +98,33 @@ export function stretchSize(imgW: number, max = 2160) {
   const width = Math.max(1, Math.floor(Math.min(max, imgW)));
   return { width, height: Math.round((width * FORMATS["9:16"].h) / FORMATS["9:16"].w) };
 }
+
+export type LayoutFormat = "9:16" | "4:5";
+
+export const LAYOUT_FORMATS: LayoutFormat[] = ["9:16", "4:5"];
+
+export type LayoutBand = { photo: Photo; crop: Crop };
+export type LayoutBands = (LayoutBand | null)[];
+
+export type LayoutCanvas = { format: LayoutFormat; bands: LayoutBands };
+
+// Proporción de una franja: el lienzo completo dividido en tres alturas.
+export function layoutBandRatio(format: LayoutFormat) {
+  return FORMATS[format].w / (FORMATS[format].h / 3);
+}
+
+// Copia la primera franja a las tres. Las copias comparten la foto original;
+// cada franja guarda su propio recorte al editarlo.
+export function repeatFirstBand(bands: LayoutBands): LayoutBands {
+  const first = bands[0];
+  if (!first) return bands;
+  return [first, first, first];
+}
+
+// Salida del Layout: ancho hasta 2160 sin superar el recorte más estrecho y
+// alto según el formato completo.
+export function layoutSize(bands: LayoutBands, format: LayoutFormat, max = 2160) {
+  const widths = bands.flatMap((band) => (band ? [band.crop.w] : []));
+  const width = widths.length ? Math.max(1, Math.floor(Math.min(max, ...widths))) : max;
+  return { width, height: Math.round((width * FORMATS[format].h) / FORMATS[format].w) };
+}

@@ -186,7 +186,7 @@ Alternativas descartadas por ahora: ZIP (dependencia extra) y exportación por l
 
 ## 9. Experiencia de uso
 
-- Pantalla inicial con dos modos: **Slides** (carrusel) y **Stretch** (una imagen a 9:16).
+- Pantalla inicial con tres modos: **Slides** (carrusel), **Stretch** (una imagen a 9:16) y **Layout** (tres franjas horizontales).
 - El formato se elige antes de recortar y queda bloqueado.
 - Los lienzos se muestran en horizontal, uno por pantalla, como los slides de una publicación: se desliza lateralmente y hay contador y flechas.
 - Al agregar una foto, la vista salta al lienzo nuevo.
@@ -234,3 +234,17 @@ Flujo aparte del carrusel, elegido en la pantalla inicial junto a **Slides**.
 - Al guardar se estira solo la sección elegida, no la foto completa.
 - Salida **JPEG 9:16**, con el mismo criterio de ancho que los lienzos (hasta 2160 px, sin superar el ancho original) y la misma entrega: descarga directa en Android y escritorio, hoja de compartir en iOS.
 - Al salir del flujo se descarta la imagen; no se guarda en el proyecto de Slides.
+
+## 14. Layout
+
+Flujo aparte del carrusel y de Stretch, elegido en la pantalla inicial.
+
+- Primero se elige el formato del lienzo, solo **9:16** o **4:5**; queda bloqueado como en Slides.
+- El lienzo son **tres franjas horizontales** apiladas, a todo lo ancho. Cada franja mide un tercio del alto: **1080 × 640** en 9:16 y **1080 × 450** en 4:5.
+- Cada franja tiene su propia foto y su propio recorte con la proporción de la franja. Se reutiliza el editor de recorte del flujo Slides (arrastre, pellizco y slider de zoom) sin la línea de división en mitades.
+- Tocar una franja permite elegir o cambiar su foto; el botón **Ajustar** reabre su recorte. Una franja vacía muestra «Toca para elegir foto».
+- **Repetir en las 3** copia la foto y el recorte de la primera franja a las otras dos. Después, cambiar una franja no afecta a las demás: cada una conserva su propia foto y recorte.
+- La vista previa muestra el lienzo completo con las miniaturas y se actualiza al mover cada recorte. Se indica el tamaño de salida.
+- **Guardar** genera un único **JPEG** del lienzo completo. Ancho hasta 2160 px sin superar el ancho del recorte más estrecho; alto según el formato (hasta 2160 × 3840 en 9:16 o 2160 × 2700 en 4:5); calidad ~0.9; mismo `fileName()` y misma entrega que el resto: descarga directa en Android y escritorio, hoja de compartir en iOS.
+- El botón Guardar permanece desactivado hasta que las tres franjas tienen foto y recorte. Si un original no se puede decodificar se usa su miniatura, como en los lienzos; nunca se genera un lienzo en blanco.
+- Todo se procesa en el dispositivo: ninguna foto se sube a un servidor.
