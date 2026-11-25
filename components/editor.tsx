@@ -202,10 +202,13 @@ export default function Editor() {
         <CropModal
           key={queue[0].id}
           photo={queue[0]}
-          ratio={ratio}
+          ratio={canvases.length ? ratio : ratio / 2}
+          showSplit={canvases.length > 0}
           onCancel={() => setQueue((q) => q.slice(1))}
           onConfirm={(crop) => {
-            addPhoto(queue[0], crop);
+            // La primera foto solo usa su mitad izquierda: se guarda como recorte
+            // de lienzo completo para no tocar el render ni el ancho de exportación.
+            addPhoto(queue[0], canvases.length ? crop : { ...crop, w: crop.w * 2 });
             setQueue((q) => q.slice(1));
           }}
         />

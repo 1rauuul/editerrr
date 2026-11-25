@@ -51,7 +51,7 @@ El usuario elige un formato **una sola vez, antes de empezar**. Ese formato se a
 
 Se exporta al doble de la resolución nativa de la plataforma (2160 de ancho), con muestreo de alta calidad, y nunca por encima del ancho del recorte original: si la foto es pequeña, el lienzo no se amplía.
 
-El marco de recorte tiene la **proporción del lienzo completo** (1:1, 4:5 o 9:16), no la de media página. El recorte elegido se divide después en dos mitades verticales que se reparten entre lienzos.
+El marco de recorte tiene la **proporción del lienzo completo** (1:1, 4:5 o 9:16), no la de media página. El recorte elegido se divide después en dos mitades verticales que se reparten entre lienzos. **Excepción: la primera foto** se recorta directamente con la proporción de media página, porque su mitad derecha no se usa.
 
 Restricción de plataforma: el feed de Instagram admite como máximo 3:4 de alto, así que un lienzo 9:16 no es válido como publicación de feed; está destinado a Historias y a TikTok.
 
@@ -190,7 +190,7 @@ Alternativas descartadas por ahora: ZIP (dependencia extra) y exportación por l
 - El formato se elige antes de recortar y queda bloqueado.
 - Los lienzos se muestran en horizontal, uno por pantalla, como los slides de una publicación: se desliza lateralmente y hay contador y flechas.
 - Al agregar una foto, la vista salta al lienzo nuevo.
-- El marco de recorte muestra la división en mitades, para que el usuario vea dónde se cortará la foto.
+- El marco de recorte muestra la división en mitades, para que el usuario vea dónde se cortará la foto; la primera foto no lleva división porque ya se recorta como una sola mitad.
 - El encuadre se ajusta moviendo y ampliando la foto detrás del marco fijo.
 - El encuadre no puede dejar espacios sin cubrir: nunca se puede alejar por debajo del marco.
 - Se advierte al usuario, al cerrar o recargar con cambios sin guardar, que el trabajo se perderá.

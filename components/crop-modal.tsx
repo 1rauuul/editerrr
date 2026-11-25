@@ -130,7 +130,12 @@ export function CropModal({
           onPointerUp={up}
           onPointerCancel={up}
           className="relative touch-none select-none overflow-hidden bg-white"
-          style={{ width: "min(92vw, 380px)", aspectRatio: String(ratio) }}
+          // El recorte de la primera foto es más alto: el ancho se limita también
+          // por la altura disponible para que el marco quepa entero.
+          style={{
+            width: `min(92vw, 380px, calc((100dvh - 13rem) * ${ratio}))`,
+            aspectRatio: String(ratio),
+          }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

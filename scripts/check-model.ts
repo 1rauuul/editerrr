@@ -67,6 +67,11 @@ assert.deepEqual(cropHalf(crop, "left"), { x: 10, y: 20, w: 50, h: 125 });
 assert.deepEqual(cropHalf(crop, "right"), { x: 60, y: 20, w: 50, h: 125 });
 assert.equal(cropHalf(crop, "left").x + cropHalf(crop, "left").w, crop.x + crop.w / 2);
 
+// La primera foto se guarda con el ancho duplicado: su mitad izquierda es el
+// encuadre elegido en el editor (marco de media página).
+const firstHalf = { x: 10, y: 20, w: 50, h: 125 };
+assert.deepEqual(cropHalf({ ...firstHalf, w: firstHalf.w * 2 }, "left"), firstHalf);
+
 // Encuadre inicial: la región mayor con la proporción pedida, centrada.
 const wide = initialCrop(4000, 3000, 0.8);
 assert.equal(wide.h, 3000);
