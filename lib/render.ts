@@ -1,8 +1,7 @@
 import {
   FORMATS,
-  cropHalf,
+  cropForCanvas,
   exportWidth,
-  halfForCanvas,
   layoutSize,
   stretchSize,
   type Canvas,
@@ -24,7 +23,7 @@ export type PaintOptions = {
   source: "thumb" | "full";
 };
 
-type Layer = { img: HTMLImageElement; src: ReturnType<typeof cropHalf>; left: boolean; release: string | null };
+type Layer = { img: HTMLImageElement; src: Crop; left: boolean; release: string | null };
 
 async function tryLoad(url: string) {
   try {
@@ -69,7 +68,12 @@ export async function paintCanvas(
     const c = selection.crop;
     layers.push({
       img,
-      src: cropHalf({ x: c.x * k, y: c.y * k, w: c.w * k, h: c.h * k }, halfForCanvas(opts.first, left)),
+      src: cropForCanvas(
+        { x: c.x * k, y: c.y * k, w: c.w * k, h: c.h * k },
+        selection.singleHalf,
+        opts.first,
+        left,
+      ),
       left,
       release: opts.source === "full" && used === photo.url ? used : null,
     });

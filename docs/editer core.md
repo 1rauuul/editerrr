@@ -51,7 +51,7 @@ El usuario elige un formato **una sola vez, antes de empezar**. Ese formato se a
 
 Se exporta al doble de la resolución nativa de la plataforma (2160 de ancho), con muestreo de alta calidad, y nunca por encima del ancho del recorte original: si la foto es pequeña, el lienzo no se amplía.
 
-El marco de recorte tiene la **proporción del lienzo completo** (1:1, 4:5 o 9:16), no la de media página. El recorte elegido se divide después en dos mitades verticales que se reparten entre lienzos. **Excepción: la primera foto** se recorta directamente con la proporción de media página, porque su mitad derecha no se usa.
+El marco de recorte tiene la **proporción del lienzo completo** (1:1, 4:5 o 9:16), no la de media página. El recorte elegido se divide después en dos mitades verticales que se reparten entre lienzos. **Excepción:** cuando la foto no rellena la mitad derecha del último lienzo (es la primera o el último ya está completo), se recorta directamente con la proporción de media página y se muestra entera; su mitad derecha no se usa.
 
 Restricción de plataforma: el feed de Instagram admite como máximo 3:4 de alto, así que un lienzo 9:16 no es válido como publicación de feed; está destinado a Historias y a TikTok.
 
@@ -78,25 +78,25 @@ Lienzo 3: [ C | vacío ]
 
 ### Reparto de mitades
 
-Cada foto se recorta una sola vez, al cargarla, con el marco del lienzo completo. Ese recorte se divide en dos mitades verticales y cada aparición muestra una:
+Cada foto se recorta una sola vez, al cargarla. Si rellena la mitad derecha vacía del último lienzo, el marco tiene la proporción del lienzo completo y ese recorte se divide en dos mitades verticales; cada aparición muestra una:
 
 - La aparición como **mitad derecha** de un lienzo muestra la **mitad izquierda** del recorte.
 - La aparición como **mitad izquierda** de un lienzo muestra la **mitad derecha** del recorte.
 
 Así, el borde derecho de un lienzo y el borde izquierdo del siguiente son las dos mitades de la misma foto: al avanzar en el carrusel, la foto continúa.
 
-Excepción: la **primera foto**, que solo aparece a la izquierda del lienzo 1, muestra su **mitad izquierda**, que es el inicio del recorrido. Su mitad derecha no se usa.
+Excepción: la foto que **no rellena la mitad derecha del último lienzo** (la primera o una que empieza lienzo porque el anterior ya está completo) solo aparece a la izquierda de un lienzo nuevo. Se recorta con la proporción de media página y se muestra **entera**, sin dividir.
 
 La **última foto** sigue la regla general: su mitad izquierda queda a la derecha del último lienzo completo (el final del carrusel) y su mitad derecha a la izquierda del lienzo provisional.
 
-La mitad que muestra cada aparición se deduce de su posición y no se guarda en el estado.
+La mitad que muestra cada aparición con recorte completo se deduce de su posición; solo se guarda en el estado si el recorte es de una sola mitad.
 
 ### Regla de agregado
 
 La cadena solo se aplica al **crear**. Al agregar una foto:
 
 - Si el último lienzo tiene la mitad derecha vacía, se rellena con la nueva foto y se añade un lienzo nuevo con esa foto a la izquierda.
-- Si el último lienzo está completo, se añade un lienzo nuevo con esa foto a la izquierda.
+- Si el último lienzo está completo, se añade un lienzo nuevo con esa foto a la izquierda, recortada como una sola mitad.
 
 Un borrado puede romper la cadena, y esta **no se repara** al recalcular. Los lienzos posteriores conservan lo que tengan.
 
@@ -138,14 +138,15 @@ Guardar explícitamente los lienzos, en lugar de reconstruirlos siempre como par
 Separar tres conceptos:
 
 1. **Foto original:** archivo seleccionado desde el dispositivo.
-2. **Selección:** encuadre con proporción de lienzo completo. Una por foto.
+2. **Selección:** encuadre con proporción de lienzo completo, o de una sola mitad si la foto no se reparte. Una por foto.
 3. **Instancia de mitad:** aparición de una selección en un espacio concreto de un lienzo.
 
 ```ts
 type Selection = {
   id: string;
   photoId: string;
-  crop: { offsetX: number; offsetY: number; scale: number };
+  crop: Crop;
+  singleHalf: boolean;
 };
 
 type HalfInstance = {
@@ -190,7 +191,7 @@ Alternativas descartadas por ahora: ZIP (dependencia extra) y exportación por l
 - El formato se elige antes de recortar y queda bloqueado.
 - Los lienzos se muestran en horizontal, uno por pantalla, como los slides de una publicación: se desliza lateralmente y hay contador y flechas.
 - Al agregar una foto, la vista salta al lienzo nuevo.
-- El marco de recorte muestra la división en mitades, para que el usuario vea dónde se cortará la foto; la primera foto no lleva división porque ya se recorta como una sola mitad.
+- El marco de recorte muestra la división en mitades cuando la foto se reparte; si la foto no rellena la derecha del último lienzo, el marco es de una sola mitad y no lleva división.
 - El encuadre se ajusta moviendo y ampliando la foto detrás del marco fijo.
 - El encuadre no puede dejar espacios sin cubrir: nunca se puede alejar por debajo del marco.
 - Se advierte al usuario, al cerrar o recargar con cambios sin guardar, que el trabajo se perderá.
@@ -215,8 +216,9 @@ Recorrido en el teléfono objetivo (Android/Chrome principal; iOS/Safari como co
 2. Importar A y elegir su encuadre.
 3. Importar B y verificar `[A | B]` y `[B | vacío]`, con la mitad izquierda de B a la derecha del lienzo 1 y la mitad derecha de B a la izquierda del lienzo 2.
 4. Intentar eliminar la instancia izquierda de B en el lienzo 2: debe aparecer el popup y, al confirmar, desaparecer el lienzo sin alterar el primero.
-5. Guardar un lienzo y comprobar que la imagen descargada tiene el tamaño del formato, el fondo blanco donde corresponde y el reparto de mitades esperado.
-6. Abrir DevTools → Network y comprobar que ninguna operación envía imágenes a servicios externos.
+5. Con el lienzo 1 completo, agregar C: el marco debe ser de una sola mitad, sin división, y C debe aparecer entera a la izquierda del lienzo 2. Al agregar D, el lienzo 2 debe quedar `[C | D1]` y el 3 `[D2 | vacío]`.
+6. Guardar un lienzo y comprobar que la imagen descargada tiene el tamaño del formato, el fondo blanco donde corresponde y el reparto de mitades esperado.
+7. Abrir DevTools → Network y comprobar que ninguna operación envía imágenes a servicios externos.
 
 También deben validarse la instalación de la PWA, el comportamiento offline y la exportación en los navegadores objetivo.
 

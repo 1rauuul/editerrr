@@ -7,7 +7,7 @@ import { Dialog } from "@/components/dialog";
 import { Layout } from "@/components/layout";
 import { ModePicker } from "@/components/mode-picker";
 import { Stretch } from "@/components/stretch";
-import { FORMATS, MAX_CANVASES, ratioOf, type Format, type Photo } from "@/lib/model";
+import { FORMATS, MAX_CANVASES, fillsLastRight, ratioOf, type Format, type Photo } from "@/lib/model";
 import { makePhoto } from "@/lib/photo";
 import { useEditor } from "@/lib/store";
 
@@ -52,6 +52,8 @@ export default function Editor() {
   const capacity = MAX_CANVASES - canvases.length;
   const ratio = ratioOf(format);
   const current = Math.min(slide, canvases.length - 1);
+  // Sin hueco en la derecha del último lienzo, la foto se recorta como una sola mitad.
+  const singleHalf = !fillsLastRight(canvases);
 
   function onScroll() {
     const el = scroller.current;
@@ -202,13 +204,11 @@ export default function Editor() {
         <CropModal
           key={queue[0].id}
           photo={queue[0]}
-          ratio={canvases.length ? ratio : ratio / 2}
-          showSplit={canvases.length > 0}
+          ratio={singleHalf ? ratio / 2 : ratio}
+          showSplit={!singleHalf}
           onCancel={() => setQueue((q) => q.slice(1))}
           onConfirm={(crop) => {
-            // La primera foto solo usa su mitad izquierda: se guarda como recorte
-            // de lienzo completo para no tocar el render ni el ancho de exportación.
-            addPhoto(queue[0], canvases.length ? crop : { ...crop, w: crop.w * 2 });
+            addPhoto(queue[0], crop, singleHalf);
             setQueue((q) => q.slice(1));
           }}
         />

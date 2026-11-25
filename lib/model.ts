@@ -18,7 +18,12 @@ export type Photo = {
   height: number;
 };
 
-export type Selection = { id: string; photoId: string; crop: Crop };
+export type Selection = {
+  id: string;
+  photoId: string;
+  crop: Crop;
+  singleHalf: boolean;
+};
 export type HalfInstance = { id: string; selectionId: string };
 export type Canvas = { id: string; left: HalfInstance; right: HalfInstance | null };
 
@@ -28,12 +33,18 @@ export function ratioOf(format: Format) {
   return FORMATS[format].w / FORMATS[format].h;
 }
 
+// Una foto nueva rellena la derecha vacía del último lienzo; si no hay hueco,
+// empieza un lienzo y se recorta como una sola mitad.
+export function fillsLastRight(canvases: Canvas[]): boolean {
+  return canvases.length > 0 && canvases[canvases.length - 1].right === null;
+}
+
 // Al agregar una foto se completa la derecha vacía del último lienzo y siempre
 // se abre uno nuevo con la foto como cabeza. La cadena rota no se repara.
 export function appendPhoto(canvases: Canvas[], selectionId: string): Canvas[] {
   const next = canvases.slice();
-  const last = next[next.length - 1];
-  if (last && last.right === null) {
+  if (fillsLastRight(next)) {
+    const last = next[next.length - 1];
     next[next.length - 1] = { ...last, right: { id: uid(), selectionId } };
   }
   next.push({ id: uid(), left: { id: uid(), selectionId }, right: null });
@@ -74,6 +85,17 @@ export function cropHalf(crop: Crop, half: "left" | "right"): Crop {
   return { x: crop.x + (half === "right" ? crop.w / 2 : 0), y: crop.y, w: crop.w / 2, h: crop.h };
 }
 
+// Un recorte de una sola mitad se muestra entero; el resto se parte según su
+// aparición.
+export function cropForCanvas(
+  crop: Crop,
+  singleHalf: boolean,
+  isFirstCanvas: boolean,
+  isLeftHalf: boolean,
+): Crop {
+  return singleHalf ? crop : cropHalf(crop, halfForCanvas(isFirstCanvas, isLeftHalf));
+}
+
 // Ancho de salida: hasta 2160 (2× el nativo) sin superar el ancho del recorte
 // original, para no inventar detalle al ampliar.
 export function exportWidth(
@@ -87,7 +109,7 @@ export function exportWidth(
     if (!inst) continue;
     const selection = selections[inst.selectionId];
     const photo = selection && photos[selection.photoId];
-    if (selection && photo) widths.push(selection.crop.w);
+    if (selection && photo) widths.push(selection.crop.w * (selection.singleHalf ? 2 : 1));
   }
   if (!widths.length) return max;
   return Math.max(1, Math.floor(Math.min(max, Math.min(...widths))));

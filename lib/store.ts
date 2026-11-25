@@ -18,7 +18,7 @@ type State = {
   photos: Record<string, Photo>;
   selections: Record<string, Selection>;
   chooseFormat: (format: Format) => void;
-  addPhoto: (photo: Photo, crop: Crop) => void;
+  addPhoto: (photo: Photo, crop: Crop, singleHalf: boolean) => void;
   updateCrop: (selectionId: string, crop: Crop) => void;
   remove: (canvasId: string, side: "left" | "right") => void;
   reset: () => void;
@@ -31,14 +31,17 @@ export const useEditor = create<State>((set) => ({  format: null,
 
   chooseFormat: (format) => set({ format }),
 
-  addPhoto: (photo, crop) =>
+  addPhoto: (photo, crop, singleHalf) =>
     set((s) => {
       if (s.canvases.length >= MAX_CANVASES) return s;
       const selectionId = uid();
       return {
         canvases: appendPhoto(s.canvases, selectionId),
         photos: { ...s.photos, [photo.id]: photo },
-        selections: { ...s.selections, [selectionId]: { id: selectionId, photoId: photo.id, crop } },
+        selections: {
+          ...s.selections,
+          [selectionId]: { id: selectionId, photoId: photo.id, crop, singleHalf },
+        },
       };
     }),
 

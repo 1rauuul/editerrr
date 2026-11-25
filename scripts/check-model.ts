@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import {
   appendPhoto,
   clampCrop,
+  cropForCanvas,
   cropHalf,
   exportWidth,
+  fillsLastRight,
   halfForCanvas,
   initialCrop,
   layoutBandRatio,
@@ -56,6 +58,11 @@ assert.equal(filled.length, 4);
 assert.equal(filled[2].right?.selectionId, "selE");
 assert.equal(filled[3].left.selectionId, "selE");
 
+// Solo se rellena la derecha del último lienzo si está vacía.
+assert.equal(fillsLastRight([]), false);
+assert.equal(fillsLastRight(afterRight), true);
+assert.equal(fillsLastRight(broken), false);
+
 // Reparto de mitades.
 assert.equal(halfForCanvas(true, true), "left");
 assert.equal(halfForCanvas(false, true), "right");
@@ -67,10 +74,12 @@ assert.deepEqual(cropHalf(crop, "left"), { x: 10, y: 20, w: 50, h: 125 });
 assert.deepEqual(cropHalf(crop, "right"), { x: 60, y: 20, w: 50, h: 125 });
 assert.equal(cropHalf(crop, "left").x + cropHalf(crop, "left").w, crop.x + crop.w / 2);
 
-// La primera foto se guarda con el ancho duplicado: su mitad izquierda es el
-// encuadre elegido en el editor (marco de media página).
-const firstHalf = { x: 10, y: 20, w: 50, h: 125 };
-assert.deepEqual(cropHalf({ ...firstHalf, w: firstHalf.w * 2 }, "left"), firstHalf);
+// Un recorte de una sola mitad se muestra entero, sea cual sea su aparición.
+const singleHalf = { x: 10, y: 20, w: 50, h: 125 };
+assert.deepEqual(cropForCanvas(singleHalf, true, false, true), singleHalf);
+assert.deepEqual(cropForCanvas(singleHalf, true, true, true), singleHalf);
+assert.deepEqual(cropForCanvas(crop, false, true, true), cropHalf(crop, "left"));
+assert.deepEqual(cropForCanvas(crop, false, false, true), cropHalf(crop, "right"));
 
 // Encuadre inicial: la región mayor con la proporción pedida, centrada.
 const wide = initialCrop(4000, 3000, 0.8);
@@ -100,7 +109,12 @@ assert.deepEqual(clampCrop({ x: 950, y: 950, w: 100, h: 100 }, 1000, 1000), {
 });
 
 // Ancho de exportación: 2× como máximo, sin inventar detalle.
-const sel = (id: string, w: number) => ({ id, photoId: "p" + id, crop: { x: 0, y: 0, w, h: w * 1.25 } });
+const sel = (id: string, w: number) => ({
+  id,
+  photoId: "p" + id,
+  crop: { x: 0, y: 0, w, h: w * 1.25 },
+  singleHalf: false,
+});
 const photos: Record<string, { id: string; url: string; thumbUrl: string; width: number; height: number }> = {
   pa: { id: "pa", url: "", thumbUrl: "", width: 4000, height: 5000 },
   pb: { id: "pb", url: "", thumbUrl: "", width: 1000, height: 1250 },
@@ -117,6 +131,22 @@ assert.equal(
 assert.equal(
   exportWidth({ id: "c", left: { id: "l", selectionId: "b" }, right: null }, selections, photos),
   1000,
+);
+
+// Un recorte de una sola mitad se dibuja entero en media página: aporta el doble
+// de ancho al cálculo de la salida.
+const single = { id: "single", photoId: "pa", crop: { x: 0, y: 0, w: 1000, h: 2500 }, singleHalf: true };
+assert.equal(
+  exportWidth({ id: "c", left: { id: "l", selectionId: "single" }, right: null }, { single }, photos),
+  2000,
+);
+assert.equal(
+  exportWidth(
+    { id: "c", left: { id: "l", selectionId: "single" }, right: null },
+    { single: { ...single, crop: { ...single.crop, w: 2000 } } },
+    photos,
+  ),
+  2160,
 );
 
 // Stretch: parte de la mayor sección 4:5 centrada, también si la foto ya es 9:16.
